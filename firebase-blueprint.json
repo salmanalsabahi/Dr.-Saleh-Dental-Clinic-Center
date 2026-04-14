@@ -1,0 +1,186 @@
+{
+  "entities": {
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A patient's appointment booking.",
+      "type": "object",
+      "properties": {
+        "service": { "type": "string" },
+        "doctor": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string", "description": "The ID of the user who booked the appointment, if logged in." },
+        "adminMessage": { "type": "string", "description": "A message from the admin to the user regarding the appointment." }
+      },
+      "required": ["service", "date", "time", "name", "phone", "status", "createdAt"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global clinic settings.",
+      "type": "object",
+      "properties": {
+        "clinicName": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "location": { "type": "string" },
+        "mapEmbedUrl": { "type": "string", "description": "Google Maps embed URL for the clinic location." },
+        "workingHours": { "type": "string", "description": "Clinic working hours." },
+        "phone": { "type": "string" },
+        "socialMedia": { 
+          "type": "object",
+          "properties": {
+            "facebook": { "type": "string" },
+            "instagram": { "type": "string" },
+            "twitter": { "type": "string" },
+            "whatsapp": { "type": "string" }
+          }
+        },
+        "privacyPolicy": { "type": "string" },
+        "termsOfService": { "type": "string" }
+      },
+      "required": ["clinicName"]
+    },
+    "Offer": {
+      "title": "Offer",
+      "description": "A clinic promotion or discount.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "discount": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["title", "description", "active"]
+    },
+    "Doctor": {
+      "title": "Doctor",
+      "description": "A doctor's profile.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "image": { "type": "string" },
+        "experience": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviews": { "type": "number" },
+        "bio": { "type": "string" },
+        "education": { "type": "string" },
+        "specialties": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "role", "image"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "A dental service offered.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "shortDesc": { "type": "string" },
+        "icon": { "type": "string" },
+        "benefits": { "type": "array", "items": { "type": "string" } },
+        "duration": { "type": "string" },
+        "results": { "type": "string" },
+        "steps": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "shortDesc"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user of the system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phone": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role", "uid"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A booking for an offer.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "offerId": { "type": "string" },
+        "offerTitle": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string" }
+      },
+      "required": ["userId", "offerId", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A notification for a user or admin.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The target user ID. If null and isAdmin is true, it's for admins." },
+        "isAdmin": { "type": "boolean" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["success", "error", "info"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "link": { "type": "string" }
+      },
+      "required": ["message", "type", "read", "createdAt"]
+    },
+    "PasswordResetRequest": {
+      "title": "PasswordResetRequest",
+      "description": "A request to reset a password.",
+      "type": "object",
+      "properties": {
+        "identifier": { "type": "string", "description": "Email or phone number." },
+        "status": { "type": "string", "enum": ["pending", "completed", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["identifier", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "appointments": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Collection of all appointments."
+    },
+    "doctors": {
+      "schema": { "$ref": "#/entities/Doctor" },
+      "description": "Collection of all doctors."
+    },
+    "services": {
+      "schema": { "$ref": "#/entities/Service" },
+      "description": "Collection of all services."
+    },
+    "offers": {
+      "schema": { "$ref": "#/entities/Offer" },
+      "description": "Collection of all offers."
+    },
+    "users": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of users and their roles."
+    },
+    "bookings": {
+      "schema": { "$ref": "#/entities/Booking" },
+      "description": "Collection of offer bookings."
+    },
+    "notifications": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Collection of notifications."
+    },
+    "password_reset_requests": {
+      "schema": { "$ref": "#/entities/PasswordResetRequest" },
+      "description": "Collection of password reset requests."
+    }
+  }
+}
