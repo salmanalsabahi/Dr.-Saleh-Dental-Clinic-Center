@@ -1,19 +1,37 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Navigate, Link, useLocation } from 'react-router-dom';
-import { auth, signInWithGoogle, logOut } from '../../firebase';
+import { auth, signInWithGoogle, logOut, db } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { LayoutDashboard, Users, Activity, LogOut, Loader2, Calendar, Settings, Shield, Star, Image as ImageIcon, ExternalLink, Key, Bell, MessageSquare, BarChart3 } from 'lucide-react';
 import { cn } from './Navbar';
 import { AdminNotifications } from '../admin/AdminNotifications';
 
 export function AdminLayout() {
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
+            setIsAdmin(true);
+          } else if (currentUser.email === 'salmanalsabahi775@gmail.com') {
+            // Keep hardcoded email as a fallback SUPER ADMIN to prevent lockout
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setIsAdmin(false);
+        }
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -49,7 +67,7 @@ export function AdminLayout() {
   }
 
   // Check if user is admin
-  if (user.email !== 'salmanalsabahi775@gmail.com') {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-100">

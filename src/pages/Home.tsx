@@ -129,7 +129,7 @@ export function Home() {
             </div>
             <span className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">صفحة فيسبوك</span>
           </a>
-          <a href="tel:+9671234567" className="flex flex-col items-center text-center gap-3 p-4 rounded-xl hover:bg-slate-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-95 group">
+          <a href={settings?.phone ? `tel:${settings.phone}` : "tel:+9671234567"} className="flex flex-col items-center text-center gap-3 p-4 rounded-xl hover:bg-slate-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-md active:scale-95 group">
             <div className="w-12 h-12 rounded-full bg-secondary-50 text-secondary-600 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
               <PhoneCall className="w-6 h-6" />
             </div>

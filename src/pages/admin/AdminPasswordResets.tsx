@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, doc, updateDoc, orderBy, getDocs, where, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { db, auth } from '../../firebase';
 import { Loader2, Check, X, Clock, User, Mail, Phone, Key, Send, AlertCircle } from 'lucide-react';
 
 export function AdminPasswordResets() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [newPasswords, setNewPasswords] = useState<{[key: string]: string}>({});
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   useEffect(() => {
@@ -20,22 +20,11 @@ export function AdminPasswordResets() {
   }, []);
 
   const handleResetPassword = async (request: any) => {
-    const newPassword = newPasswords[request.id];
-    if (!newPassword || newPassword.length < 6) {
-      setMessage({ type: 'error', text: 'يرجى إدخال كلمة مرور صالحة (6 أحرف على الأقل).' });
-      return;
-    }
-
     setProcessingId(request.id);
     setMessage(null);
 
     try {
       // 1. Find user by email or phone
-      let userEmail = '';
-      let userUid = '';
-      let userName = '';
-      let userPhone = '';
-
       const usersRef = collection(db, 'users');
       let q = query(usersRef, where('email', '==', request.identifier));
       let querySnapshot = await getDocs(q);
@@ -50,59 +39,37 @@ export function AdminPasswordResets() {
       }
 
       const userData = querySnapshot.docs[0].data();
-      userEmail = userData.email;
-      userUid = userData.uid;
-      userName = userData.displayName;
-      userPhone = userData.phone;
+      const userEmail = userData.email;
+      const userUid = userData.uid;
 
-      // 2. Call API to reset password in Firebase Auth
-      const resetRes = await fetch('/api/admin/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: userUid, newPassword })
-      });
+      if (!userEmail) {
+        throw new Error('لا يوجد بريد إلكتروني مرتبط بالمستخدم لإرسال الرابط.');
+      }
 
-      if (!resetRes.ok) throw new Error('فشل تغيير كلمة المرور في النظام.');
+      // 2. Send official Firebase Password Reset Email
+      await sendPasswordResetEmail(auth, userEmail);
 
-      // 3. Send email with new password
-      await fetch('/api/admin/send-password-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: userEmail, 
-          phone: userPhone, 
-          newPassword, 
-          userName 
-        })
-      });
-
-      // 4. Create notification for user
+      // 3. Create notification for user
       await addDoc(collection(db, 'notifications'), {
         userId: userUid,
-        message: 'تم إعادة تعيين كلمة المرور الخاصة بك من قبل المسؤول. يرجى التحقق من بريدك الإلكتروني.',
-        type: 'info',
+        title: 'إعادة تعيين كلمة المرور',
+        message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني بنجاح من قبل الإدارة.',
+        type: 'system',
         read: false,
         createdAt: serverTimestamp()
       });
 
-      // 5. Update request status
+      // 4. Update request status
       await updateDoc(doc(db, 'password_reset_requests', request.id), {
         status: 'completed',
         completedAt: new Date().toISOString()
       });
 
-      setMessage({ type: 'success', text: 'تم تغيير كلمة المرور وإرسالها للمستخدم بنجاح.' });
-      
-      // Clear password input
-      setNewPasswords(prev => {
-        const next = { ...prev };
-        delete next[request.id];
-        return next;
-      });
+      setMessage({ type: 'success', text: 'تم إرسال رابط تحديث كلمة المرور لبريد المستخدم بنجاح!' });
 
     } catch (error: any) {
       console.error("Error resetting password:", error);
-      setMessage({ type: 'error', text: error.message || 'حدث خطأ أثناء العملية.' });
+      setMessage({ type: 'error', text: error.message || 'حدث خطأ أثناء إرسال الرابط. حاول مرة أخرى.' });
     } finally {
       setProcessingId(null);
     }
@@ -170,35 +137,21 @@ export function AdminPasswordResets() {
               </div>
 
               {request.status === 'pending' && (
-                <div className="flex flex-col md:flex-row gap-4 items-end">
-                  <div className="flex-1 w-full">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">كلمة المرور الجديدة</label>
-                    <div className="relative">
-                      <Key className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        type="text"
-                        value={newPasswords[request.id] || ''}
-                        onChange={(e) => setNewPasswords(prev => ({ ...prev, [request.id]: e.target.value }))}
-                        className="w-full pl-4 pr-11 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500 outline-none"
-                        placeholder="أدخل كلمة المرور الجديدة هنا"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex flex-col md:flex-row gap-4 items-end mt-4">
+                  <div className="flex gap-2 w-full">
                     <button
                       onClick={() => handleReject(request.id)}
-                      className="flex-1 md:flex-none px-6 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold transition-all"
+                      className="flex-1 px-6 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold transition-all"
                     >
                       تجاهل
                     </button>
                     <button
                       onClick={() => handleResetPassword(request)}
                       disabled={processingId === request.id}
-                      className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="flex-[2] px-6 py-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold transition-all shadow-lg shadow-primary-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {processingId === request.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                      تغيير وإرسال
+                      إرسال رابط الاستعادة للمستخدم
                     </button>
                   </div>
                 </div>

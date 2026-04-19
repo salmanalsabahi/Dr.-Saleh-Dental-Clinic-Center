@@ -1,13 +1,19 @@
 import { GoogleGenAI, Chat } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
+let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
 
 export function getChatSession(): Chat {
+  if (!ai) {
+    // استخدم المفتاح المقدم من قبلك مباشرة ليعمل البوت بسلاسة على Hostinger
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "AIzaSyCwX2cFIB6SzZVzwviDvJBgDev6399e3eo";
+    
+    ai = new GoogleGenAI({ apiKey });
+  }
+
   if (!chatSession) {
     chatSession = ai.chats.create({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       config: {
         systemInstruction: `أنت مساعد ذكي ومحترف لمركز الدكتور صالح الرداعي لجراحة الفم والوجه والفكين والتجميل.
 مهمتك هي الإجابة على استفسارات المرضى والزوار بأسلوب مهذب، احترافي، ومختصر.

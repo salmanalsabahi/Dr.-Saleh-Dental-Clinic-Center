@@ -102,7 +102,7 @@ export function Offers() {
             <div key={offer.id} className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300">
               {offer.imageUrl && (
                 <div className="relative h-56 overflow-hidden">
-                  <img src={offer.imageUrl} alt={offer.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={offer.imageUrl || undefined} alt={offer.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute top-4 end-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
                     {offer.discount}% خصم
                   </div>

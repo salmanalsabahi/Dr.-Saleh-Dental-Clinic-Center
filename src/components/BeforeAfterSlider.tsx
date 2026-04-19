@@ -33,7 +33,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, title, description 
       >
         {/* After Image (Background) */}
         <img 
-          src={afterImage} 
+          src={afterImage || undefined} 
           alt="After" 
           className="absolute inset-0 w-full h-full object-cover"
           referrerPolicy="no-referrer"
@@ -45,7 +45,7 @@ export function BeforeAfterSlider({ beforeImage, afterImage, title, description 
           style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
         >
           <img 
-            src={beforeImage} 
+            src={beforeImage || undefined} 
             alt="Before" 
             className="absolute inset-0 w-full h-full object-cover grayscale-[0.3] brightness-90"
             referrerPolicy="no-referrer"

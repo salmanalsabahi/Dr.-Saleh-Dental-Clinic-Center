@@ -1,18 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Loader2, Mail, Shield, User as UserIcon, Key, Phone, X, Send, Check, AlertCircle, MessageCircle } from 'lucide-react';
+import { Loader2, Mail, Shield, User as UserIcon, Key, Phone, X, Send, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [newPassword, setNewPassword] = useState('');
   const [processing, setProcessing] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [resetLink, setResetLink] = useState('');
   const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+  const handleToggleRole = async (user: any) => {
+    try {
+      const newRole = user.role === 'admin' ? 'user' : 'admin';
+      await updateDoc(doc(db, 'users', user.id), {
+        role: newRole
+      });
+      setMessage({ type: 'success', text: `تم تغيير صلاحية المستخدم إلى ${newRole === 'admin' ? 'مشرف' : 'عميل'} بنجاح.` });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error: any) {
+      console.error("Error toggling role:", error);
+      setMessage({ type: 'error', text: 'حدث خطأ أثناء تغيير الصلاحيات.' });
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'users'));
@@ -28,48 +41,25 @@ export function AdminUsers() {
     setMessage(null);
 
     try {
-      // Call API to generate reset link
-      const res = await fetch('/api/admin/generate-reset-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: selectedUser.email })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'فشل إنشاء رابط إعادة التعيين.');
+      if (!selectedUser?.email) {
+        throw new Error('لا يوجد بريد إلكتروني مسجل لهذا المستخدم لإرسال الرابط.');
       }
 
-      setResetLink(data.link);
+      // Use standard Firebase frontend SDK for password reset
+      const { sendPasswordResetEmail } = await import('firebase/auth');
+      const { auth } = await import('../../firebase');
+      
+      await sendPasswordResetEmail(auth, selectedUser.email);
+
       setResetSuccess(true);
-      setMessage({ type: 'success', text: 'تم إنشاء رابط إعادة تعيين كلمة المرور بنجاح.' });
+      setMessage({ type: 'success', text: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى البريد الإلكتروني للمستخدم بنجاح.' });
 
     } catch (error: any) {
-      console.error("Error generating reset link:", error);
-      setMessage({ type: 'error', text: error.message || 'حدث خطأ أثناء العملية.' });
+      console.error("Error sending reset link:", error);
+      setMessage({ type: 'error', text: error.message || 'حدث خطأ أثناء إرسال الرابط.' });
     } finally {
       setProcessing(false);
     }
-  };
-
-  const handleWhatsAppShare = () => {
-    if (!selectedUser?.phone) {
-      alert('لا يوجد رقم هاتف مسجل لهذا المستخدم.');
-      return;
-    }
-    
-    const cleanPhone = selectedUser.phone.replace(/\D/g, '');
-    let finalPhone = cleanPhone;
-    if (cleanPhone.length === 9 && cleanPhone.startsWith('7')) {
-      finalPhone = '967' + cleanPhone;
-    } else if (cleanPhone.length === 10 && cleanPhone.startsWith('0')) {
-      finalPhone = '967' + cleanPhone.substring(1);
-    }
-
-    const shareMessage = `مرحباً ${selectedUser.displayName || 'عميلنا العزيز'}،\nلقد طلبت إعادة تعيين كلمة المرور الخاصة بك.\nيرجى الضغط على الرابط التالي لتعيين كلمة مرور جديدة:\n${resetLink}`;
-    const encodedMessage = encodeURIComponent(shareMessage);
-    window.open(`https://wa.me/${finalPhone}?text=${encodedMessage}`, '_blank');
   };
 
   if (loading) {
@@ -133,13 +123,22 @@ export function AdminUsers() {
                     {user.createdAt ? new Date(user.createdAt).toLocaleDateString('ar-YE') : 'غير معروف'}
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() => setSelectedUser(user)}
-                      className="bg-amber-50 text-amber-600 hover:bg-amber-100 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold"
-                    >
-                      <Key className="w-4 h-4" />
-                      إعادة تعيين
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleToggleRole(user)}
+                        className={`${user.role === 'admin' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'} px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold`}
+                      >
+                        <Shield className="w-4 h-4" />
+                        {user.role === 'admin' ? 'إزالة الإشراف' : 'ترقية لمشرف'}
+                      </button>
+                      <button
+                        onClick={() => setSelectedUser(user)}
+                        className="bg-amber-50 text-amber-600 hover:bg-amber-100 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-xs font-bold"
+                      >
+                        <Key className="w-4 h-4" />
+                        المرور
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -205,23 +204,11 @@ export function AdminUsers() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[10px] break-all font-mono text-slate-500 mb-2">
-                      {resetLink}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleWhatsAppShare}
-                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-600/20"
-                    >
-                      <MessageCircle className="w-6 h-6" />
-                      إرسال الرابط عبر واتساب
-                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedUser(null);
                         setResetSuccess(false);
-                        setResetLink('');
                         setMessage(null);
                       }}
                       className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-all"

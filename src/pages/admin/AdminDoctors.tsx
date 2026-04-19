@@ -3,6 +3,8 @@ import { collection, query, onSnapshot, doc, deleteDoc, addDoc, updateDoc } from
 import { db } from '../../firebase';
 import { Loader2, Plus, Edit2, Trash2, X } from 'lucide-react';
 
+import { compressImage } from '../../utils/imageUtils';
+
 export function AdminDoctors() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,11 +56,13 @@ export function AdminDoctors() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({...formData, image: reader.result as string});
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedImage = await compressImage(file);
+      setFormData({...formData, image: compressedImage});
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      alert("حدث خطأ أثناء معالجة الصورة. يرجى المحاولة بصورة أخرى.");
+    }
   };
 
   const handleSubmit = async (e: any) => {
@@ -108,7 +112,7 @@ export function AdminDoctors() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {doctors.map(doctor => (
           <div key={doctor.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <img src={doctor.image} alt={doctor.name} className="w-full h-48 object-cover" />
+            <img src={doctor.image || undefined} alt={doctor.name} className="w-full h-48 object-cover" />
             <div className="p-6">
               <h3 className="text-xl font-bold text-slate-900 mb-1">{doctor.name}</h3>
               <p className="text-primary-600 text-sm mb-4">{doctor.role}</p>

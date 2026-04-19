@@ -3,6 +3,8 @@ import { collection, addDoc, query, onSnapshot, updateDoc, doc, deleteDoc } from
 import { db } from '../../firebase';
 import { Loader2, Plus, Trash2, ToggleLeft, ToggleRight, Edit2, X } from 'lucide-react';
 
+import { compressImage } from '../../utils/imageUtils';
+
 export function AdminOffers() {
   const [offers, setOffers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,11 +22,13 @@ export function AdminOffers() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({...formData, imageUrl: reader.result as string});
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedImage = await compressImage(file);
+      setFormData({...formData, imageUrl: compressedImage});
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      alert("حدث خطأ أثناء معالجة الصورة. يرجى المحاولة بصورة أخرى.");
+    }
   };
 
   useEffect(() => {
@@ -89,7 +93,7 @@ export function AdminOffers() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {offers.map(offer => (
           <div key={offer.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-            {offer.imageUrl && <img src={offer.imageUrl} alt={offer.title} className="w-full h-40 object-cover" />}
+            {offer.imageUrl && <img src={offer.imageUrl || undefined} alt={offer.title} className="w-full h-40 object-cover" />}
             <div className="p-6 flex-1 flex flex-col gap-3">
               <h3 className="font-bold text-lg">{offer.title}</h3>
               <p className="text-slate-600 text-sm flex-1">{offer.description}</p>
@@ -134,7 +138,7 @@ export function AdminOffers() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">صورة العرض</label>
                 <input type="file" accept="image/*" onChange={handleFileChange} className="w-full p-3 rounded-xl border border-slate-200 focus:border-primary-500 focus:ring-0" />
-                {formData.imageUrl && <img src={formData.imageUrl} alt="Preview" className="mt-2 h-20 rounded-lg" />}
+                {formData.imageUrl && <img src={formData.imageUrl || undefined} alt="Preview" className="mt-2 h-20 rounded-lg" />}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">وصف العرض</label>

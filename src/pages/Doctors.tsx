@@ -64,7 +64,7 @@ export function Doctors() {
             >
               <div className="sm:w-2/5 h-64 sm:h-auto relative overflow-hidden">
                 <img 
-                  src={doctor.image} 
+                  src={doctor.image || undefined} 
                   alt={doctor.name} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"

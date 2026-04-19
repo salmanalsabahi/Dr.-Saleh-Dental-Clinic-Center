@@ -3,6 +3,8 @@ import { collection, addDoc, query, onSnapshot, updateDoc, doc, deleteDoc } from
 import { db } from '../../firebase';
 import { Loader2, Plus, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react';
 
+import { compressImage } from '../../utils/imageUtils';
+
 export function AdminBeforeAfter() {
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +34,13 @@ export function AdminBeforeAfter() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData({...formData, [field]: reader.result as string});
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedImage = await compressImage(file);
+      setFormData({...formData, [field]: compressedImage});
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      alert("حدث خطأ أثناء معالجة الصورة. يرجى المحاولة بصورة أخرى.");
+    }
   };
 
   const handleOpenModal = (caseData?: any) => {
@@ -86,8 +90,8 @@ export function AdminBeforeAfter() {
         {cases.map(item => (
           <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
             <div className="grid grid-cols-2 h-32">
-              <img src={item.beforeImage} alt="Before" className="w-full h-full object-cover border-r border-white" />
-              <img src={item.afterImage} alt="After" className="w-full h-full object-cover" />
+              <img src={item.beforeImage || undefined} alt="Before" className="w-full h-full object-cover border-r border-white" />
+              <img src={item.afterImage || undefined} alt="After" className="w-full h-full object-cover" />
             </div>
             <div className="p-6 flex-1 flex flex-col gap-2">
               <h3 className="font-bold text-lg">{item.title}</h3>
@@ -125,7 +129,7 @@ export function AdminBeforeAfter() {
                   <label className="block text-sm font-medium text-slate-700">صورة "قبل"</label>
                   <div className="relative aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 overflow-hidden group">
                     {formData.beforeImage ? (
-                      <img src={formData.beforeImage} alt="Before" className="w-full h-full object-cover" />
+                      <img src={formData.beforeImage || undefined} alt="Before" className="w-full h-full object-cover" />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
                         <ImageIcon className="w-8 h-8 mb-2" />
@@ -140,7 +144,7 @@ export function AdminBeforeAfter() {
                   <label className="block text-sm font-medium text-slate-700">صورة "بعد"</label>
                   <div className="relative aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 overflow-hidden group">
                     {formData.afterImage ? (
-                      <img src={formData.afterImage} alt="After" className="w-full h-full object-cover" />
+                      <img src={formData.afterImage || undefined} alt="After" className="w-full h-full object-cover" />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
                         <ImageIcon className="w-8 h-8 mb-2" />

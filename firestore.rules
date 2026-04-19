@@ -2,10 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -22,10 +18,6 @@ service cloud.firestore {
     function hasRequiredFields(fields) {
       return request.resource.data.keys().hasAll(fields);
     }
-    
-    // ===============================================================
-    // Rules
-    // ===============================================================
     
     match /users/{userId} {
       allow read: if isAdmin() || request.auth.uid == userId;
@@ -45,89 +37,50 @@ service cloud.firestore {
     }
     
     match /doctors/{doctorId} {
-      // Anyone can read doctors
       allow read: if true;
-      // Only admins can modify doctors
-      allow create: if isAdmin() && hasRequiredFields(['name', 'role', 'image']);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
-    }
-    
-    function isValidOffer(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
-             data.description is string && data.description.size() > 0 && data.description.size() < 1000 &&
-             data.active is bool &&
-             (data.discount is number && data.discount >= 0 && data.discount <= 100) &&
-             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000));
+      allow create, update, delete: if isAdmin();
     }
 
     match /offers/{offerId} {
-      // Anyone can read active offers, admins can read all
       allow read: if isAdmin() || (resource != null && resource.data.active == true);
-      // Only admins can modify offers
-      allow create: if isAdmin() && hasRequiredFields(['title', 'description', 'active']) && isValidOffer(request.resource.data);
-      allow update: if isAdmin() && isValidOffer(request.resource.data);
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
     
     match /services/{serviceId} {
-      // Anyone can read services
       allow read: if true;
-      // Only admins can modify services
-      allow create: if isAdmin() && hasRequiredFields(['title', 'shortDesc']);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
     
     match /siteSettings/{documentId} {
-      // Anyone can read site settings
       allow read: if true;
-      // Only admins can modify site settings
       allow write: if isAdmin();
     }
 
     match /beforeAfter/{caseId} {
-      // Anyone can read active cases
       allow read: if isAdmin() || (resource != null && resource.data.active == true);
-      // Only admins can modify
-      allow create: if isAdmin() && hasRequiredFields(['title', 'description', 'beforeImage', 'afterImage', 'active']);
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /bookings/{bookingId} {
-      // Admins can read all, users can read their own
       allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-      // Authenticated users can create bookings
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      // Only admins can update status
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update, delete: if isAdmin();
     }
 
     match /notifications/{notificationId} {
-      // Admins can read all notifications, users can read their own
       allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-      // Anyone can create notifications
       allow create: if true;
-      // Admins can update all, users can update their own
       allow update: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow delete: if isAdmin();
     }
 
     match /password_reset_requests/{requestId} {
-      // Only admins can read and update
-      allow read: if isAdmin();
-      // Anyone can create a request
+      allow read, update, delete: if isAdmin();
       allow create: if true;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
     }
 
     match /contactMessages/{messageId} {
-      // Only admins can read, update, or delete contact messages
       allow read, update, delete: if isAdmin();
-      // Anyone can create a contact message
       allow create: if true; 
     }
   }

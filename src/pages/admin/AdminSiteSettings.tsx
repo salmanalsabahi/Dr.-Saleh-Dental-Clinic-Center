@@ -3,6 +3,8 @@ import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from 'fireba
 import { db } from '../../firebase';
 import { Loader2, Save, AlertCircle, CheckCircle2, Bell } from 'lucide-react';
 
+import { compressImage } from '../../utils/imageUtils';
+
 export function AdminSiteSettings() {
   const [settings, setSettings] = useState({
     clinicName: '',
@@ -41,13 +43,13 @@ export function AdminSiteSettings() {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // In a real app, you would upload to Firebase Storage here.
-    // For now, we'll simulate it by creating a data URL.
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSettings({...settings, [field]: reader.result as string});
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedImage = await compressImage(file);
+      setSettings({...settings, [field]: compressedImage});
+    } catch (error) {
+      console.error("Error compressing image:", error);
+      alert("حدث خطأ أثناء معالجة الصورة. يرجى المحاولة بصورة أخرى.");
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

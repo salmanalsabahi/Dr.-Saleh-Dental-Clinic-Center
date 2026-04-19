@@ -94,11 +94,11 @@ export function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm">
                 <MapPin className="w-5 h-5 text-primary-500 shrink-0 mt-0.5" />
-                <span>صنعاء، اليمن<br />مركز الدكتور صالح الرداعي</span>
+                <span>{settings?.location || "صنعاء، اليمن\nمركز الدكتور صالح الرداعي"}</span>
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Phone className="w-5 h-5 text-primary-500 shrink-0" />
-                <span dir="ltr">+967 123 4567</span>
+                <span dir="ltr">{settings?.phone || "+967 123 4567"}</span>
               </li>
               <li className="flex items-center gap-3 text-sm">
                 <Mail className="w-5 h-5 text-primary-500 shrink-0" />
@@ -108,8 +108,7 @@ export function Footer() {
                 <Clock className="w-5 h-5 text-primary-500 shrink-0 mt-0.5" />
                 <div>
                   <span className="block text-white mb-1">ساعات العمل:</span>
-                  <span className="block text-slate-400">السبت - الخميس: 9:00 ص - 8:00 م</span>
-                  <span className="block text-slate-400">الجمعة: مغلق (للطوارئ فقط)</span>
+                <span className="block text-slate-400 whitespace-pre-line">{settings?.workingHours || "السبت - الخميس: 9:00 ص - 8:00 م\nالجمعة: مغلق (للطوارئ فقط)"}</span>
                 </div>
               </li>
             </ul>
