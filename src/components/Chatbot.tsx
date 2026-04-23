@@ -52,16 +52,16 @@ export function Chatbot() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-20 lg:bottom-6 right-4 lg:right-6 z-[45]"
           >
             <Button 
               onClick={() => setIsOpen(true)} 
-              className="rounded-full w-16 h-16 shadow-2xl bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800 border-4 border-white/20 relative group"
+              className="rounded-full w-10 h-10 lg:w-14 lg:h-14 shadow-2xl bg-gradient-to-br from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800 border-2 lg:border-4 border-white/20 relative group p-0"
             >
-              <MessageCircle className="w-8 h-8 text-white" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+              <MessageCircle className="w-5 h-5 lg:w-7 lg:h-7 text-white" />
+              <span className="absolute -top-1 -right-1 flex h-3 w-3 lg:h-4 lg:w-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 border-2 border-white"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 lg:h-4 lg:w-4 bg-amber-500 border border-white"></span>
               </span>
             </Button>
           </motion.div>
@@ -75,7 +75,7 @@ export function Chatbot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 w-[380px] h-[600px] shadow-2xl z-50 flex flex-col rounded-3xl overflow-hidden bg-white border border-slate-100"
+            className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 w-[calc(100vw-2rem)] lg:w-[380px] h-[500px] lg:h-[600px] shadow-2xl z-[55] flex flex-col rounded-3xl overflow-hidden bg-white border border-slate-100"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-teal-600 to-teal-800 p-4 flex items-center justify-between text-white shrink-0">

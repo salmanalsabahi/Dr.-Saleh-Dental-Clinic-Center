@@ -6,6 +6,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { auth, signInWithGoogle, logOut } from '../../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { Notifications } from '../Notifications';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
 
@@ -26,6 +28,7 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const { settings } = useSiteSettings();
 
@@ -40,8 +43,25 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
+            setIsAdmin(true);
+          } else if (currentUser.email === 'salmanalsabahi775@gmail.com') {
+            setIsAdmin(true);
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (error) {
+          console.error("Error checking role:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -105,15 +125,17 @@ export function Navbar() {
             {user ? (
               <div className="flex items-center gap-3">
                 <Notifications />
-                {user.email === 'salmanalsabahi775@gmail.com' && (
-                  <Link to="/admin" className={cn("text-sm font-medium transition-colors", !isTransparent ? "text-slate-700 hover:text-teal-600" : "text-white/90 hover:text-amber-400")}>
-                    لوحة التحكم
+                {isAdmin ? (
+                  <Link to="/admin" className={cn("flex items-center gap-2 text-sm font-medium transition-colors", !isTransparent ? "text-slate-700 hover:text-teal-600" : "text-white/90 hover:text-amber-400")}>
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="User" className="w-8 h-8 rounded-full border-2 border-amber-400/50" />
+                    <span>لوحة التحكم</span>
+                  </Link>
+                ) : (
+                  <Link to="/profile" className={cn("flex items-center gap-2 text-sm font-medium transition-colors", !isTransparent ? "text-slate-700 hover:text-teal-600" : "text-white/90 hover:text-amber-400")}>
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="User" className="w-8 h-8 rounded-full border-2 border-amber-400/50" />
+                    <span>حسابي</span>
                   </Link>
                 )}
-                <Link to="/profile" className={cn("flex items-center gap-2 text-sm font-medium transition-colors", !isTransparent ? "text-slate-700 hover:text-teal-600" : "text-white/90 hover:text-amber-400")}>
-                  <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="User" className="w-8 h-8 rounded-full border-2 border-amber-400/50" />
-                  <span>{user.displayName?.split(' ')[0]}</span>
-                </Link>
                 <button onClick={logOut} className={cn("p-2 rounded-full transition-colors", !isTransparent ? "text-red-500 hover:bg-red-50" : "text-red-400 hover:bg-white/10")} title="تسجيل الخروج">
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -134,13 +156,20 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className={cn("md:hidden p-2 -me-2 transition-colors", !isTransparent ? "text-slate-900" : "text-white")}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile Menu Toggle & Notifications for Mobile */}
+          <div className="flex md:hidden items-center gap-3">
+            {user && (
+              <div className={cn("transition-colors", !isTransparent ? "text-slate-900" : "text-white")}>
+                <Notifications />
+              </div>
+            )}
+            <button
+              className={cn("p-2 -me-2 transition-colors", !isTransparent ? "text-slate-900" : "text-white")}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -179,11 +208,14 @@ export function Navbar() {
                           <div className="text-xs text-slate-500">{user.email}</div>
                         </div>
                       </div>
-                      <Notifications />
                     </div>
-                    {user.email === 'salmanalsabahi775@gmail.com' && (
-                      <Link to="/admin" className="flex items-center gap-2 py-2 text-teal-600 font-medium w-full text-right">
+                    {isAdmin ? (
+                      <Link to="/admin" className="flex items-center gap-2 py-2 text-teal-600 font-medium w-full text-right bg-teal-50 px-3 rounded-lg mt-2">
                         لوحة تحكم المشرف
+                      </Link>
+                    ) : (
+                      <Link to="/profile" className="flex items-center gap-2 py-2 text-teal-600 font-medium w-full text-right bg-teal-50 px-3 rounded-lg mt-2">
+                        حسابي
                       </Link>
                     )}
                     <button onClick={logOut} className="flex items-center gap-2 py-2 text-red-600 font-medium w-full text-right">

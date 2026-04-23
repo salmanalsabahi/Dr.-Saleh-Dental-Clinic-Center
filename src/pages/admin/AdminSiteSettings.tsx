@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { Loader2, Save, AlertCircle, CheckCircle2, Bell } from 'lucide-react';
+import { db, auth } from '../../firebase';
+import { Loader2, Save, AlertCircle, CheckCircle2, Bell, ShieldAlert } from 'lucide-react';
 
 import { compressImage } from '../../utils/imageUtils';
 

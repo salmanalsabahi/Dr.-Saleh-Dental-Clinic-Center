@@ -6,6 +6,7 @@ let chatSession: Chat | null = null;
 export function getChatSession(): Chat {
   if (!ai) {
     // استخدم المفتاح المقدم من قبلك مباشرة ليعمل البوت بسلاسة على Hostinger
+    // @ts-ignore - Ignore Vite specific env type error
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || "AIzaSyCwX2cFIB6SzZVzwviDvJBgDev6399e3eo";
     
     ai = new GoogleGenAI({ apiKey });

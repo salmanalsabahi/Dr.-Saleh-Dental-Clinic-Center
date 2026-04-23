@@ -17,12 +17,15 @@ export function AdminLayout() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        if (currentUser.email === 'openclaw@emtiazsky.com') {
+           setIsAdmin(true);
+           setLoading(false);
+           return;
+        }
+
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists() && userDoc.data().role === 'admin') {
-            setIsAdmin(true);
-          } else if (currentUser.email === 'salmanalsabahi775@gmail.com') {
-            // Keep hardcoded email as a fallback SUPER ADMIN to prevent lockout
             setIsAdmin(true);
           } else {
             setIsAdmin(false);

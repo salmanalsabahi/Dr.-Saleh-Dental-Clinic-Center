@@ -19,20 +19,20 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Helper to save user to Firestore
+export { sendPasswordResetEmail } from 'firebase/auth';
 export const saveUserToFirestore = async (user: any, additionalData: any = {}, role: string = 'user') => {
   if (!user) return;
   const userRef = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
   
-  const userData = {
+  const userData: any = {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName || additionalData.displayName || '',
     photoURL: user.photoURL || '',
     phone: additionalData.phone || '',
-    role: user.email === 'salmanalsabahi775@gmail.com' ? 'admin' : role,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    role: user.email === 'openclaw@emtiazsky.com' ? 'admin' : (additionalData.role || role)
   };
 
   if (!userSnap.exists()) {
@@ -41,6 +41,14 @@ export const saveUserToFirestore = async (user: any, additionalData: any = {}, r
       createdAt: new Date().toISOString()
     });
   } else {
+    // Preserve existing role, but force admin if this specific user
+    const existingData = userSnap.data();
+    
+    // Always force admin for the designated email
+    if (user.email === 'openclaw@emtiazsky.com') {
+        userData.role = 'admin';
+    } 
+    
     await setDoc(userRef, userData, { merge: true });
   }
 };

@@ -5,6 +5,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { ScrollToTop } from './components/ScrollToTop';
 import { Home } from './pages/Home';
 import { Services } from './pages/Services';
 import { Doctors } from './pages/Doctors';
@@ -33,6 +34,7 @@ import { AdminAnalytics } from './pages/admin/AdminAnalytics';
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Layout />}>

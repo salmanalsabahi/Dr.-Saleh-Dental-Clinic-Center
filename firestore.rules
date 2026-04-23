@@ -11,7 +11,7 @@ service cloud.firestore {
         (
           (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          (request.auth.token.email == "salmanalsabahi775@gmail.com")
+          (request.auth.token.email == "openclaw@emtiazsky.com")
         );
     }
     
@@ -22,7 +22,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAdmin() || request.auth.uid == userId;
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAdmin() || request.auth.uid == userId;
+      allow update: if isAdmin() || (request.auth.uid == userId && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == resource.data.role));
       allow delete: if isAdmin();
     }
     
@@ -31,7 +31,7 @@ service cloud.firestore {
       allow create: if hasRequiredFields(['service', 'date', 'time', 'name', 'phone', 'status', 'createdAt']) &&
                     request.resource.data.status == 'pending';
       // Admins can read all, users can read their own
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.keys().hasAll(['userId']) && resource.data.userId == request.auth.uid);
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }

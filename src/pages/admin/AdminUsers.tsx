@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, doc, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, onSnapshot, doc, updateDoc, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
 import { Loader2, Mail, Shield, User as UserIcon, Key, Phone, X, Send, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -22,7 +22,7 @@ export function AdminUsers() {
       setTimeout(() => setMessage(null), 3000);
     } catch (error: any) {
       console.error("Error toggling role:", error);
-      setMessage({ type: 'error', text: 'حدث خطأ أثناء تغيير الصلاحيات.' });
+      setMessage({ type: 'error', text: `حدث خطأ أثناء تغيير الصلاحيات: ${error.message}` });
       setTimeout(() => setMessage(null), 3000);
     }
   };

@@ -30,12 +30,13 @@ export function AdminPasswordResets() {
       let querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
+        // Try searching string matched phone
         q = query(usersRef, where('phone', '==', request.identifier));
         querySnapshot = await getDocs(q);
       }
 
       if (querySnapshot.empty) {
-        throw new Error('لم يتم العثور على المستخدم في قاعدة البيانات.');
+        throw new Error('لم يتم العثور على المستخدم في قاعدة البيانات. قد يكون الحساب محذوفاً أو أن بريده/الرقم المدخل خطأ.');
       }
 
       const userData = querySnapshot.docs[0].data();

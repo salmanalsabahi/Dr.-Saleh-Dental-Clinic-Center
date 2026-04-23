@@ -7,7 +7,8 @@ import {
   signInWithGoogle, 
   saveUserToFirestore,
   findUserByPhone,
-  db
+  db,
+  sendPasswordResetEmail
 } from '../firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -58,7 +59,8 @@ export function Auth() {
           throw new Error('يرجى إدخال البريد الإلكتروني أو رقم الهاتف.');
         }
 
-        await signInWithEmailAndPassword(auth, loginEmail, password);
+        const userCredential = await signInWithEmailAndPassword(auth, loginEmail, password);
+        await saveUserToFirestore(userCredential.user, {});
         navigate(from, { replace: true });
       } else {
         // Sign up validation
@@ -89,7 +91,7 @@ export function Auth() {
           err.message === 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.') {
         errorMessage = err.message;
       } else if (err.code === 'auth/email-already-in-use') {
-        errorMessage = 'البريد الإلكتروني مستخدم بالفعل.';
+        errorMessage = 'هذا الحساب موجود بالفعل! يرجى الانتقال لقسم (تسجيل الدخول) المجاور للدخول إلى حسابك.';
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'البريد الإلكتروني غير صالح.';
       } else if (err.code === 'auth/operation-not-allowed') {
@@ -97,12 +99,14 @@ export function Auth() {
       } else if (err.code === 'auth/weak-password') {
         errorMessage = 'كلمة المرور ضعيفة جداً.';
       } else if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        errorMessage = 'البيانات المدخلة غير صحيحة.';
+        errorMessage = 'البيانات المدخلة غير صحيحة. إذا كنت متأكداً من الإيميل، يرجى الضغط على "نسيت كلمة المرور؟" لإنشاء كلمة مرور جديدة.';
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = 'هذا البريد مسجل مسبقاً بطريقة دخول مختلفة (مثل جوجل). يرجى المتابعة باستخدام جوجل.';
       } else if (err.message?.includes('Identity Toolkit API') || err.code?.includes('identity-toolkit-api')) {
         errorMessage = 'يجب تفعيل Identity Toolkit API في لوحة تحكم Google Cloud للمشروع الخاص بك.';
       } else {
         // Display the actual error message for debugging
-        errorMessage = `خطأ: ${err.message || err.code || 'غير معروف'}`;
+        errorMessage = `خطأ (${err.code}): ${err.message}`;
       }
       
       setError(errorMessage);
@@ -119,7 +123,14 @@ export function Auth() {
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error("Google Auth error:", err);
-      setError(`حدث خطأ أثناء تسجيل الدخول باستخدام Google: ${err.message || 'يرجى المحاولة مرة أخرى.'}`);
+      // Ignore if the user manually closed the popup
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setError('');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('تم حظر النافذة المنبثقة بواسطة المتصفح. يرجى فتح الموقع في نافذة جديدة (Open in new tab) أو السماح بالنوافذ المنبثقة.');
+      } else {
+        setError(`حدث خطأ أثناء تسجيل الدخول باستخدام Google: ${err.message || 'يرجى المحاولة مرة أخرى.'}`);
+      }
       setLoading(false);
     }
   };

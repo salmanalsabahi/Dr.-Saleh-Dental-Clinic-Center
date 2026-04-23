@@ -53,15 +53,47 @@ async function startServer() {
     const { uid, newPassword } = req.body;
 
     try {
+      if (!admin.apps.length) throw new Error("Firebase Admin not configured");
       await admin.auth().updateUser(uid, {
         password: newPassword
       });
       res.status(200).json({ message: "تم تغيير كلمة المرور بنجاح" });
     } catch (error: any) {
       console.error("Error resetting password:", error);
-      // Provide more context in the response for debugging
       res.status(500).json({ 
         error: "فشل تغيير كلمة المرور", 
+        details: error.message,
+        code: error.code 
+      });
+    }
+  });
+
+  // API route for admin to update their own email and password
+  app.post("/api/admin/update-account", async (req, res) => {
+    const { uid, newEmail, newPassword } = req.body;
+    
+    try {
+      if (!admin.apps.length) throw new Error("Firebase Admin not configured");
+      
+      const updateData: any = {};
+      if (newEmail) updateData.email = newEmail;
+      if (newPassword) updateData.password = newPassword;
+      
+      if (Object.keys(updateData).length > 0) {
+        await admin.auth().updateUser(uid, updateData);
+        
+        // Also update Firestore if email changed
+        if (newEmail) {
+          const db = admin.firestore();
+          await db.collection("users").doc(uid).set({ email: newEmail }, { merge: true });
+        }
+      }
+      
+      res.status(200).json({ message: "تم تحديث الحساب بنجاح" });
+    } catch (error: any) {
+      console.error("Error updating account:", error);
+      res.status(500).json({ 
+        error: "فشل تحديث الحساب", 
         details: error.message,
         code: error.code 
       });

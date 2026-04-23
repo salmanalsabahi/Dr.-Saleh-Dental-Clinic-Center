@@ -3,10 +3,11 @@ import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { Chatbot } from '../Chatbot';
 import { FloatingSocialButtons } from '../FloatingSocialButtons';
+import { MobileBottomNav } from './MobileBottomNav';
 
 export function Layout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative pb-[68px] lg:pb-0">
       <Navbar />
       <main className="flex-grow">
         <Outlet />
@@ -15,6 +16,7 @@ export function Layout() {
       
       <Chatbot />
       <FloatingSocialButtons />
+      <MobileBottomNav />
     </div>
   );
 }
